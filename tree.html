@@ -114,12 +114,10 @@
         var root = (function (data) {
             var r = d3.hierarchy(data);
 
-            debugger
-            r.dx = 10;
+            r.dx = 30;
             r.dy = width / (r.height + 1);
             return d3.tree().nodeSize([r.dx, r.dy])(r);
         })(data)
-        debugger
 
 
         let x0 = Infinity;
