@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="utf-8">
+    <title>d3demo</title>
+</head>
+<style>
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: black;
+        shape-rendering: crispEdges;
+    }
+
+    .axis text {
+        font-family: sans-serif;
+        font-size: 11px;
+    }
+
+    .tooltip {
+        background-color: black;
+        border: none;
+        border-radius: 5px;
+        padding: 15px;
+        min-width: 400px;
+        text-align: left;
+        color: white;
+    }
+
+</style>
+
+<body>
+    <!-- <script src="./js/d3/d3.js" charset="utf-8"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/d3@6"></script>
+    <script>
+        // 数据
+        var data = {
+            id: 1,
+            name: '10.17.65.112',
+            sourceInfo: {
+                proc: [
+                    {
+                        pid: 1,
+                        pname: 'tomcat',
+                        cmdline: 'tomcat-8088',
+                    }
+                ],
+                bind: [
+                    {
+                        bind_ip: '0.0.0.0/0',
+                        bind_port: 8080,
+                        bind_protocol: 'tcp',
+                        pid: 1,
+                        pname: 'tomcat',
+                    }
+                ],
+            },
+            children: [
+                {
+                    id: 2,
+                    name: '10.17.66.117',
+                    connect: [
+                        {
+                            connect_server_port: '9200',
+                        },
+                        {
+                            connect_server_port: '3306',
+                        },
+                    ]
+                },
+                {
+                    id: 3,
+                    name: '10.17.78.100',
+                    connect: [
+                        {
+                            connect_server_port: '6739',
+                        },
+                    ]
+                },
+                {
+                    id: 4,
+                    name: '10.17.66.118',
+                    connect: [
+                        {
+                            connect_server_port: '9200',
+                        },
+                        {
+                            connect_server_port: '3306',
+                        },
+                    ]
+                },
+                {
+                    id: 5,
+                    name: '10.17.78.101',
+                    connect: [
+                        {
+                            connect_server_port: '6739',
+                        },
+                    ]
+                },
+            ]
+        }
+        // 图宽
+        var width = 954;
+        // 选复提示
+        var tooltip = d3.select("body")
+            .append("div")
+            .style("position", "absolute")
+            .style("z-index", "10")
+            .style("visibility", "hidden")
+            .attr("class", "tooltip");
+
+        var root = (function (data) {
+            var r = d3.hierarchy(data);
+
+            debugger
+            r.dx = 10;
+            r.dy = width / (r.height + 1);
+            return d3.tree().nodeSize([r.dx, r.dy])(r);
+        })(data)
+        debugger
+
+
+        let x0 = Infinity;
+        let x1 = -x0;
+
+        root.each(d => {
+            if (d.x > x1) x1 = d.x;
+            if (d.x < x0) x0 = d.x;
+        });
+
+        var svg = d3.select("body")
+            .append("svg")
+            .attr("viewBox", [0, 0, width, x1 - x0 + root.dx * 2])
+
+        var g = svg.append("g")
+            .attr("font-family", "sans-serif")
+            .attr("font-size", 10)
+            .attr("transform", `translate(${root.dy / 3},${root.dx - x0})`);
+
+        var link = g.append("g")
+            .attr("fill", "none")
+            .attr("stroke", "#555")
+            .attr("stroke-opacity", 0.4)
+            .attr("stroke-width", 1.5)
+            .selectAll("path")
+            .data(root.links())
+            .join("path")
+            .attr("d", d3.linkHorizontal()
+                .x(d => d.y)
+                .y(d => d.x))
+
+            .on("mouseover", function (d) {
+                var sourceNodeData = d.srcElement.__data__.source.data
+                var targetNodeData = d.srcElement.__data__.target.data
+
+                var tooltipHtml = sourceNodeData.name
+                if (targetNodeData && targetNodeData.connect) {
+                    tooltipHtml += "<br/><br/>CONNECTING<br/>" + targetNodeData.connect
+                        .map(e => `${targetNodeData.name}:${e.connect_server_port}`).join('<br/>')
+                }
+                tooltip.html(tooltipHtml)
+
+                tooltip.style("visibility", "visible");
+            })
+            .on("mousemove", function (event) { return tooltip.style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px"); })
+            .on("mouseout", function () { return tooltip.style("visibility", "hidden"); });
+
+        ;
+
+        var node = g.append("g")
+            .attr("stroke-linejoin", "round")
+            .attr("stroke-width", 3)
+            .selectAll("g")
+            .data(root.descendants())
+            .join("g")
+            .attr("transform", d => `translate(${d.y},${d.x})`)
+
+            .on("mouseover", function (d) {
+                var nodeData = d.srcElement.__data__.data
+                var tooltipHtml = nodeData.name
+                if (nodeData.sourceInfo && nodeData.sourceInfo.proc) {
+                    tooltipHtml += "<br/><br/>PROCESS<br/>" + data.sourceInfo.proc
+                        .map(e => `${e.pid} ${e.pname} ${e.cmdline}`).join('<br/>')
+                }
+                if (nodeData.sourceInfo && nodeData.sourceInfo.bind) {
+                    tooltipHtml += "<br/><br/>BINDINGS<br/>" + data.sourceInfo.bind
+                        .map(e => `${e.bind_protocol} ${e.bind_ip}:${e.bind_port} ${e.pid}/${e.pname}`).join('<br/>')
+                }
+                tooltip.html(tooltipHtml)
+
+                tooltip.style("visibility", "visible");
+            })
+            .on("mousemove", function (event) { return tooltip.style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px"); })
+            .on("mouseout", function () {
+                tooltip.html('')
+                tooltip.style("visibility", "hidden");
+            });
+
+        ;
+
+
+        node.append("circle")
+            .attr("fill", d => d.children ? "#555" : "#999")
+            .attr("r", 2.5);
+        node.append("text")
+            .attr("dy", "0.31em")
+            .attr("x", d => d.children ? -6 : 6)
+            .attr("text-anchor", d => d.children ? "end" : "start")
+            .text(d => d.data.name)
+            .clone(true).lower()
+            .attr("stroke", "white");
+
+    </script>
+</body>
+
+</html>

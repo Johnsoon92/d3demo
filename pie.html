@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="utf-8">
+    <title>d3demo</title>
+</head>
+<style>
+    .axis path,
+    .axis line {
+        fill: none;
+        stroke: black;
+        shape-rendering: crispEdges;
+    }
+
+    .axis text {
+        font-family: sans-serif;
+        font-size: 11px;
+    }
+
+</style>
+
+<body>
+
+    <script src="./js/d3/d3.js" charset="utf-8"></script>
+    <script>
+        //画布大小
+        var width = 400;
+        var height = 400;
+        //在 body 里添加一个 SVG 画布   
+        var svg = d3.select("body")
+            .append("svg")
+            .attr("width", width)
+            .attr("height", height);
+        //画布周边的空白
+        var padding = { left: 30, right: 30, top: 20, bottom: 20 };
+
+
+        //定义一个数组
+        var dataset = [10, 20, 30, 40, 33, 24, 12, 5];
+        var piedata = d3.pie()(dataset);
+        // 弧生成器
+        var outerRadius = 150; //外半径
+        var innerRadius = 0; //内半径，为0则中间没有空白
+
+        var arc = d3.arc()  //弧生成器
+            .innerRadius(innerRadius)   //设置内半径
+            .outerRadius(outerRadius);  //设置外半径
+
+        var arcs = svg.selectAll("g")
+            .data(piedata)
+            .enter()
+            .append("g")
+            .attr("transform", "translate(" + (width / 2) + "," + (width / 2) + ")");
+
+            debugger;
+        var color = d3.schemeCategory10;   //有十种颜色的颜色比例尺
+
+        arcs.append("path")
+            .attr("fill", function (d, i) {
+                return color[i];
+            })
+            .attr("d", function (d) {
+                return arc(d);   //调用弧生成器，得到路径值
+            });
+        arcs.append("text")
+            .attr("transform", function (d) {
+                return "translate(" + arc.centroid(d) + ")";
+            })
+            .attr("text-anchor", "middle")
+            .text(function (d) {
+                return d.data;
+            });
+    </script>
+</body>
+
+</html>
