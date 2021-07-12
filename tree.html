@@ -31,8 +31,8 @@
 </style>
 
 <body>
-    <!-- <script src="./js/d3/d3.js" charset="utf-8"></script> -->
-    <script src="https://cdn.jsdelivr.net/npm/d3@6"></script>
+    <script src="./js/d3/d3.js" charset="utf-8"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/d3@6"></script> -->
     <script>
         // 数据
         var data = {
@@ -137,35 +137,53 @@
             .attr("font-size", 10)
             .attr("transform", `translate(${root.dy / 3},${root.dx - x0})`);
 
-        var link = g.append("g")
+        g.append("g")
             .attr("fill", "none")
             .attr("stroke", "#555")
             .attr("stroke-opacity", 0.4)
             .attr("stroke-width", 1.5)
             .selectAll("path")
-            .data(root.links())
+            .data([{ source: { x: 0, y: 0 }, target: { x: 100, y: 600 } }])
             .join("path")
             .attr("d", d3.linkHorizontal()
                 .x(d => d.y)
                 .y(d => d.x))
 
-            .on("mouseover", function (d) {
-                var sourceNodeData = d.srcElement.__data__.source.data
-                var targetNodeData = d.srcElement.__data__.target.data
+        // var link = g.append("g")
+        //     .attr("fill", "none")
+        //     .attr("stroke", "#555")
+        //     .attr("stroke-opacity", 0.4)
+        //     .attr("stroke-width", 1.5)
+        //     .selectAll("path")
+        //     .data(root.links())
+        //     .join("path")
 
-                var tooltipHtml = sourceNodeData.name
-                if (targetNodeData && targetNodeData.connect) {
-                    tooltipHtml += "<br/><br/>CONNECTING<br/>" + targetNodeData.connect
-                        .map(e => `${targetNodeData.name}:${e.connect_server_port}`).join('<br/>')
-                }
-                tooltip.html(tooltipHtml)
+        //     .on("mouseover", function (d) {
+        //         var sourceNodeData = d.srcElement.__data__.source.data
+        //         var targetNodeData = d.srcElement.__data__.target.data
 
-                tooltip.style("visibility", "visible");
-            })
-            .on("mousemove", function (event) { return tooltip.style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px"); })
-            .on("mouseout", function () { return tooltip.style("visibility", "hidden"); });
+        //         var tooltipHtml = sourceNodeData.name
+        //         if (targetNodeData && targetNodeData.connect) {
+        //             tooltipHtml += "<br/><br/>CONNECTING<br/>" + targetNodeData.connect
+        //                 .map(e => `${targetNodeData.name}:${e.connect_server_port}`).join('<br/>')
+        //         }
+        //         tooltip.html(tooltipHtml)
 
-        ;
+        //         tooltip.style("visibility", "visible");
+        //     })
+        //     .on("mousemove", function (event) { return tooltip.style("top", (event.pageY - 10) + "px").style("left", (event.pageX + 10) + "px"); })
+        //     .on("mouseout", function () { return tooltip.style("visibility", "hidden"); })
+
+        //     .attr("d", d3.linkHorizontal()
+        //         .x(d => 0)
+        //         .y(d => 0))
+        //     .transition()
+        //     .duration(2000)
+        //     .ease(d3.easeLinear)
+        //     .attr("d", d3.linkHorizontal()
+        //         .x(d => d.y)
+        //         .y(d => d.x))
+        //     ;
 
         var node = g.append("g")
             .attr("stroke-linejoin", "round")
@@ -173,8 +191,6 @@
             .selectAll("g")
             .data(root.descendants())
             .join("g")
-            .attr("transform", d => `translate(${d.y},${d.x})`)
-
             .on("mouseover", function (d) {
                 var nodeData = d.srcElement.__data__.data
                 var tooltipHtml = nodeData.name
@@ -194,21 +210,26 @@
             .on("mouseout", function () {
                 tooltip.html('')
                 tooltip.style("visibility", "hidden");
-            });
-
-        ;
+            })
+        // node.attr("transform", d => `translate(${d.y},${d.x})`)
+        node
+            .transition()
+            .duration(2000)
+            .ease(d3.easeLinear)
+            .attr("transform", d => `translate(${d.y},${d.x})`)
 
 
         node.append("circle")
             .attr("fill", d => d.children ? "#555" : "#999")
-            .attr("r", 2.5);
+            .attr("r", 2.5)
+
         node.append("text")
             .attr("dy", "0.31em")
             .attr("x", d => d.children ? -6 : 6)
             .attr("text-anchor", d => d.children ? "end" : "start")
             .text(d => d.data.name)
             .clone(true).lower()
-            .attr("stroke", "white");
+            .attr("stroke", "white")
 
     </script>
 </body>
